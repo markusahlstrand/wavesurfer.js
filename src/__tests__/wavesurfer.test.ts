@@ -147,6 +147,32 @@ describe('WaveSurfer public methods', () => {
     expect(peaks[0]).toEqual([0, 1, -1])
   })
 
+  test('updatePeaks updates waveform with new data', () => {
+    const ws = createWs()
+    jest.spyOn(ws, 'getDuration').mockReturnValue(10)
+    const renderer = getRenderer()
+    const peaksSpy = jest.fn()
+    ws.on('peaks', peaksSpy)
+
+    const newPeaks = [[0.1, 0.2, 0.3, 0.4]]
+    ws.updatePeaks(newPeaks, 10)
+
+    expect((ws as any).decodedData).toBeTruthy()
+    expect(renderer.render).toHaveBeenCalled()
+    expect(peaksSpy).toHaveBeenCalledWith(10)
+  })
+
+  test('updatePeaks throws without channelData', () => {
+    const ws = createWs()
+    expect(() => ws.updatePeaks(undefined as any)).toThrow('channelData is required')
+  })
+
+  test('updatePeaks throws without duration when no audio loaded', () => {
+    const ws = createWs()
+    jest.spyOn(ws, 'getDuration').mockReturnValue(0)
+    expect(() => ws.updatePeaks([[0.1, 0.2]])).toThrow('duration is required when no audio is loaded')
+  })
+
   test('getDuration falls back to decoded data', () => {
     const ws = createWs()
     const media = ws.getMediaElement()

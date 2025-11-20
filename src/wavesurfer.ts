@@ -108,6 +108,8 @@ export type WaveSurferEvents = {
   decode: [duration: number]
   /** When the audio is both decoded and can play */
   ready: [duration: number]
+  /** When peaks are updated with new resolution */
+  peaks: [duration: number]
   /** When visible waveform is drawn */
   redraw: []
   /** When all audio channel chunks of the waveform have drawn */
@@ -145,7 +147,7 @@ export type WaveSurferEvents = {
   /** When source file is unable to be fetched, decoded, or an error is thrown by media element */
   error: [error: Error]
   /** When audio container resizing */
-  resize: [];
+  resize: []
 }
 
 class WaveSurfer extends Player<WaveSurferEvents> {
@@ -324,8 +326,8 @@ class WaveSurfer extends Player<WaveSurferEvents> {
 
       // Resize
       this.renderer.on('resize', () => {
-        this.emit('resize');
-      })
+        this.emit('resize')
+      }),
     )
 
     // Drag
@@ -549,6 +551,25 @@ class WaveSurfer extends Player<WaveSurferEvents> {
     }
     this.renderer.zoom(minPxPerSec)
     this.emit('zoom', minPxPerSec)
+  }
+
+  /** Update peaks with higher resolution data without reloading audio */
+  public updatePeaks(channelData: WaveSurferOptions['peaks'], duration?: number) {
+    if (!channelData) {
+      throw new Error('channelData is required')
+    }
+
+    const audioDuration = duration || this.getDuration()
+    if (!audioDuration) {
+      throw new Error('duration is required when no audio is loaded')
+    }
+
+    // Create new decoded data buffer from peaks and duration
+    this.decodedData = Decoder.createBuffer(channelData, audioDuration)
+
+    // Re-render the waveform with new peaks
+    this.renderer.render(this.decodedData)
+    this.emit('peaks', audioDuration)
   }
 
   /** Get the decoded audio data */
