@@ -568,10 +568,8 @@ class WaveSurfer extends Player<WaveSurferEvents> {
     this.decodedData = Decoder.createBuffer(channelData, audioDuration)
 
     // Re-render the waveform with new peaks
-    if (this.decodedData) {
-      this.renderer.render(this.decodedData)
-      this.emit('peaks', audioDuration)
-    }
+    this.renderer.render(this.decodedData)
+    this.emit('peaks', audioDuration)
   }
 
   /** Get the decoded audio data */
